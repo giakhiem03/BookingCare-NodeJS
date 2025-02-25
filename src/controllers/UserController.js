@@ -2,8 +2,8 @@ import userService from "../services/userService";
 
 class UserController {
     handleLogin = async (req, res) => {
+        console.log(req.body);
         let { email, password } = req.body;
-
         if (!email || !password) {
             return res.status(500).json({
                 errCode: 1,
