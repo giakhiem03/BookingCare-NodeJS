@@ -1,6 +1,7 @@
 import { where } from "sequelize";
 import db from "../models";
 import bcrypt from "bcryptjs";
+import e from "express";
 
 class UserService {
     checkUserEmail = (email) => {
@@ -68,6 +69,32 @@ class UserService {
     compareUserPassword = () => {
         return new Promise((resolve, reject) => {
             try {
+            } catch (error) {
+                reject(error);
+            }
+        });
+    };
+
+    getAllCodeService = (type) => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                if (!type) {
+                    resolve({
+                        errCode: 1,
+                        errMessage: "Missing required parameters",
+                    });
+                } else {
+                    let res = {};
+
+                    let allCode = await db.AllCode.findAll({
+                        where: {
+                            type,
+                        },
+                    });
+                    res.errCode = 0;
+                    res.data = allCode;
+                    resolve(res);
+                }
             } catch (error) {
                 reject(error);
             }
