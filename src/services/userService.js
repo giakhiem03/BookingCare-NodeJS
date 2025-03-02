@@ -2,8 +2,21 @@ import { where } from "sequelize";
 import db from "../models";
 import bcrypt from "bcryptjs";
 import e from "express";
+import { raw } from "body-parser";
 
 class UserService {
+    salt = bcrypt.genSaltSync(10);
+    hashPassword(password) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const hashPassword = await bcrypt.hashSync(password, this.salt);
+                resolve(hashPassword);
+            } catch (e) {
+                reject(e);
+            }
+        });
+    }
+
     checkUserEmail = (email) => {
         return new Promise(async (resolve, reject) => {
             try {
@@ -35,7 +48,13 @@ class UserService {
                             email,
                         },
                         raw: true,
-                        attributes: ["email", "roleId", "password"],
+                        attributes: [
+                            "email",
+                            "roleId",
+                            "firstName",
+                            "lastName",
+                            "password",
+                        ],
                     });
                     if (user) {
                         let check = await bcrypt.compareSync(
@@ -94,6 +113,119 @@ class UserService {
                     res.errCode = 0;
                     res.data = allCode;
                     resolve(res);
+                }
+            } catch (error) {
+                reject(error);
+            }
+        });
+    };
+
+    createNewUser = (data) => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                let check = await this.checkUserEmail(data.email);
+                if (check) {
+                    resolve({
+                        errCode: 1,
+                        errMessage: "Your email is already in used",
+                    });
+                } else {
+                    let hashPasswordFromBcrypt = await this.hashPassword(
+                        data.password
+                    );
+                    await db.User.create({
+                        email: data.email,
+                        password: hashPasswordFromBcrypt,
+                        firstName: data.firstName,
+                        lastName: data.lastName,
+                        address: data.address,
+                        phoneNumber: data.phoneNumber,
+                        gender: data.gender,
+                        roleId: data.roleId,
+                        positionId: data.positionId,
+                    });
+
+                    resolve({
+                        errCode: 0,
+                        message: "OK",
+                    });
+                }
+            } catch (error) {
+                resolve({ errCode: 2, errMessage: error });
+            }
+        });
+    };
+
+    getAllUser = (id) => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                let listUser;
+                if (id === "ALL") {
+                    listUser = await db.User.findAll();
+                } else {
+                    listUser = await db.User.findOne({
+                        where: {
+                            id,
+                        },
+                    });
+                }
+                resolve({
+                    errCode: 0,
+                    users: listUser,
+                });
+            } catch (error) {
+                resolve({ errCode: 2, errMessage: error });
+            }
+        });
+    };
+
+    deleteUser = (id) => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                await db.User.destroy({
+                    where: {
+                        id,
+                    },
+                });
+                resolve({
+                    errCode: 0,
+                    message: "OK",
+                });
+            } catch (error) {
+                reject(error);
+            }
+        });
+    };
+
+    updateUserData = (data) => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                if (
+                    !data.id ||
+                    !data.roleId ||
+                    !data.positionId ||
+                    !data.gender
+                ) {
+                    resolve({
+                        errCode: 2,
+                        errMessage: "Missing required parameters",
+                    });
+                }
+                let user = await db.User.findOne({
+                    where: { id: data.id },
+                    raw: false,
+                });
+                if (user) {
+                    user.firstName = data.firstName;
+                    user.lastName = data.lastName;
+                    user.address = data.address;
+                    user.roleId = data.roleId;
+                    user.positionId = data.positionId;
+                    user.gender = data.gender;
+                    user.phoneNumber = data.phoneNumber;
+
+                    await user.save();
+                    resolve({ errCode: 0, message: "Update user succeed" });
                 }
             } catch (error) {
                 reject(error);

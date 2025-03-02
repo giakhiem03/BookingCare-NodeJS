@@ -34,6 +34,29 @@ class UserController {
             });
         }
     };
+
+    handleCreateNewUser = async (req, res) => {
+        let message = await userService.createNewUser(req.body);
+        return res.status(200).json(message);
+    };
+
+    handleGetAllUser = async (req, res) => {
+        let id = req.query.id;
+        let message = await userService.getAllUser(id);
+        return res.status(200).json(message);
+    };
+
+    handleDeleteUser = async (req, res) => {
+        let id = req.body.id;
+        let message = await userService.deleteUser(id);
+        return res.status(200).json(message);
+    };
+
+    handleEditUser = async (req, res) => {
+        let data = req.body;
+        let message = await userService.updateUserData(data);
+        return res.status(200).json(message);
+    };
 }
 
 export default new UserController();
