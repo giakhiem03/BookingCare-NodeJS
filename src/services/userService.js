@@ -143,6 +143,7 @@ class UserService {
                         gender: data.gender,
                         roleId: data.roleId,
                         positionId: data.positionId,
+                        image: data.avatar,
                     });
 
                     resolve({
@@ -151,7 +152,7 @@ class UserService {
                     });
                 }
             } catch (error) {
-                resolve({ errCode: 2, errMessage: error });
+                resolve({ errCode: 2, errMessage: error.name });
             }
         });
     };
@@ -174,7 +175,7 @@ class UserService {
                     users: listUser,
                 });
             } catch (error) {
-                resolve({ errCode: 2, errMessage: error });
+                resolve({ errCode: 2, errMessage: error.name });
             }
         });
     };
@@ -223,7 +224,9 @@ class UserService {
                     user.positionId = data.positionId;
                     user.gender = data.gender;
                     user.phoneNumber = data.phoneNumber;
-
+                    if (data.avatar) {
+                        user.image = data.avatar;
+                    }
                     await user.save();
                     resolve({ errCode: 0, message: "Update user succeed" });
                 }
